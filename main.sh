@@ -29,10 +29,20 @@ for dir in "${REQUIRED_DIRS[@]}"; do
   fi
 done
 
-# check for missing config file
+# check for missing config file and if config is avalible read it and add everything to variables
 if [[ ! -f "$CONFIG_FILE" ]]; then
   echo "Missing config file in dir: $CONFIG_FILE"
   MISSING=1
+else
+  while IFS='=' read -r key value; do
+    key=$(echo "$key" | xargs)
+    value=$(echo "$value" | sed 's/#.*//' | xargs)
+
+    if [[ -n "$key" && -n "$value" ]]; then
+      declare -g "$key=$value"
+    fi
+  done < <(grep -vE '^\s*#|^\s*$' "$CONFIG_FILE")
+
 fi
 
 # show error message when something is missing
@@ -62,3 +72,4 @@ for util in "${UTILS_LIST[@]}"; do
     exit 1
   fi
 done
+
